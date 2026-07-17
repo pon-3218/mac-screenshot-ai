@@ -8,6 +8,7 @@ version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$proje
 release_dir="$project_dir/dist/releases/$version"
 work_dir=$(mktemp -d "${TMPDIR:-/tmp}/capture-codex-release.XXXXXX")
 app_path="$work_dir/$app_name.app"
+stable_archive_path=""
 
 cleanup() {
     rm -rf "$work_dir"
@@ -64,6 +65,10 @@ case "$mode" in
             --wait
         xcrun stapler staple "$archive_path"
         xcrun stapler validate "$archive_path"
+
+        stable_archive_path="$release_dir/Capture-Codex-macOS.dmg"
+        rm -f "$stable_archive_path"
+        ditto "$archive_path" "$stable_archive_path"
         ;;
 
     *)
@@ -73,4 +78,7 @@ case "$mode" in
 esac
 
 shasum -a 256 "$archive_path" > "$archive_path.sha256"
+if [[ -n "$stable_archive_path" ]]; then
+    shasum -a 256 "$stable_archive_path" > "$stable_archive_path.sha256"
+fi
 print "$archive_path"

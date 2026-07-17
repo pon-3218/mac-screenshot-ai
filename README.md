@@ -31,7 +31,7 @@ macOSの選択領域をキャプチャし、その画像についてCodexへ質�
 
 ## インストール
 
-配布版はGitHub Releasesに添付された公証済みDMGを開き、`Capture Codex.app`をApplicationsへ移動します。
+配布版は[最新の公証済みDMG](https://github.com/pon-3218/mac-screenshot-ai/releases/latest/download/Capture-Codex-macOS.dmg)を開き、`Capture Codex.app`をApplicationsへ移動します。
 
 初回起動時に次の権限が必要です。
 

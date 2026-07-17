@@ -57,8 +57,8 @@ macOSの選択領域をキャプチャし、その画像についてCodexへ質�
 ## ソースからビルド
 
 ```bash
-git clone https://github.com/pon-3218/capture-codex.git
-cd capture-codex
+git clone https://github.com/pon-3218/mac-screenshot-ai.git
+cd mac-screenshot-ai
 make app
 open "dist/Capture Codex.app"
 ```

@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build Swift package
+        run: swift build
+      - name: Build app bundle
+        run: ARCHS=arm64 ./scripts/build-app.sh
+      - name: Verify app bundle
+        run: ./scripts/verify-app.sh

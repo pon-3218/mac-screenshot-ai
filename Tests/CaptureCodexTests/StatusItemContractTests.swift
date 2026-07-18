@@ -18,4 +18,14 @@ final class StatusItemContractTests: XCTestCase {
         XCTAssertTrue(source.contains("item.autosaveName = \"CaptureCodex.statusItem\""))
         XCTAssertTrue(source.contains("item.isVisible = true"))
     }
+
+    func testReleaseChecksumsUsePortableFileNames() throws {
+        let script = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("scripts/release.sh"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(script.contains("shasum -a 256 \"${archive_path:t}\""))
+        XCTAssertTrue(script.contains("shasum -a 256 \"${stable_archive_path:t}\""))
+    }
 }

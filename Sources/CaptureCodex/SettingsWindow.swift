@@ -2,7 +2,6 @@ import AppKit
 import ApplicationServices
 import CoreGraphics
 import SwiftUI
-import UserNotifications
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
@@ -54,8 +53,6 @@ final class SettingsWindowController: NSWindowController {
 private final class SettingsViewState: ObservableObject {
     @Published var screenCaptureAllowed = false
     @Published var accessibilityAllowed = false
-    @Published var notificationAllowed: Bool?
-    @Published var notificationDetails = ""
 
     private let onRequestPermissions: () -> Void
 
@@ -66,34 +63,12 @@ private final class SettingsViewState: ObservableObject {
     func refresh() {
         screenCaptureAllowed = CGPreflightScreenCaptureAccess()
         accessibilityAllowed = AXIsProcessTrusted()
-        notificationAllowed = nil
-        notificationDetails = ""
-
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
-            let authorized = settings.authorizationStatus == .authorized
-                || settings.authorizationStatus == .provisional
-            let bannerEnabled = settings.alertSetting == .enabled
-            let centerEnabled = settings.notificationCenterSetting == .enabled
-            let soundEnabled = settings.soundSetting == .enabled
-            let allowed = authorized && (bannerEnabled || centerEnabled)
-            let details = [
-                "バナー\(bannerEnabled ? "ON" : "OFF")",
-                "通知センター\(centerEnabled ? "ON" : "OFF")",
-                "サウンド\(soundEnabled ? "ON" : "OFF")"
-            ].joined(separator: "・")
-            DispatchQueue.main.async {
-                self?.notificationAllowed = allowed
-                self?.notificationDetails = authorized ? details : "通知が許可されていません"
-            }
-        }
     }
 
     func requestPermissions() {
         onRequestPermissions()
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-                self?.refresh()
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            self?.refresh()
         }
     }
 
@@ -105,9 +80,6 @@ private final class SettingsViewState: ObservableObject {
         SystemSettingsNavigator.openAccessibility()
     }
 
-    func openNotificationSettings() {
-        SystemSettingsNavigator.openNotifications()
-    }
 }
 
 private struct SettingsView: View {
@@ -139,7 +111,7 @@ private struct SettingsView: View {
                     Label("状態を更新", systemImage: "arrow.clockwise")
                 }
 
-                Button("テスト通知", action: onTestNotification)
+                Button("完了通知をテスト", action: onTestNotification)
 
                 Spacer()
 
@@ -206,12 +178,6 @@ private struct SettingsView: View {
                 label: "アクセシビリティ",
                 allowed: state.accessibilityAllowed,
                 openSettings: state.openAccessibilitySettings
-            )
-            permissionRow(
-                label: "通知",
-                allowed: state.notificationAllowed,
-                details: state.notificationDetails,
-                openSettings: state.openNotificationSettings
             )
         }
     }

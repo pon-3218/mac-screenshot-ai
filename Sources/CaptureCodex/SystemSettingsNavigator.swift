@@ -10,12 +10,6 @@ enum SystemSettingsNavigator {
         openPrivacyPane(anchor: "Privacy_Accessibility")
     }
 
-    static func openNotifications() {
-        open(
-            "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=\(Bundle.main.bundleIdentifier ?? "")"
-        )
-    }
-
     private static func openPrivacyPane(anchor: String) {
         open("x-apple.systempreferences:com.apple.preference.security?\(anchor)")
     }

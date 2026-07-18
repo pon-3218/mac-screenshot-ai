@@ -54,4 +54,36 @@ final class StatusItemContractTests: XCTestCase {
         XCTAssertTrue(onboarding.contains("アクセス権を設定"))
         XCTAssertTrue(onboarding.contains("⌘⇧4"))
     }
+
+    func testCompletionUsesOnlyInAppNotificationAndReopenShowsAnswer() throws {
+        let app = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Sources/CaptureCodex/CaptureCodexApp.swift"),
+            encoding: .utf8
+        )
+        let model = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Sources/CaptureCodex/AppModel.swift"),
+            encoding: .utf8
+        )
+        let settings = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Sources/CaptureCodex/SettingsWindow.swift"),
+            encoding: .utf8
+        )
+        let onboarding = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Sources/CaptureCodex/OnboardingWindow.swift"),
+            encoding: .utf8
+        )
+        let package = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Package.swift"),
+            encoding: .utf8
+        )
+
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: repositoryRoot.appendingPathComponent("Sources/CaptureCodex/NotificationService.swift").path
+        ))
+        XCTAssertFalse(model.contains("NotificationService"))
+        XCTAssertFalse(package.contains("UserNotifications"))
+        XCTAssertFalse(settings.contains("UserNotifications"))
+        XCTAssertFalse(onboarding.contains("通知"))
+        XCTAssertTrue(app.contains("else {\n            showLastAnswer()\n        }"))
+    }
 }

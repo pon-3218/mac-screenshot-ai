@@ -6,11 +6,19 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Build Swift package
         run: swift build
+      - name: Run tests
+        run: swift test
+      - name: Verify release dependency lock
+        run: |
+          python3 -m venv "$RUNNER_TEMP/release-lock-venv"
+          "$RUNNER_TEMP/release-lock-venv/bin/pip" install --require-hashes --requirement scripts/requirements-release.txt
       - name: Build app bundle
         run: ARCHS=arm64 ./scripts/build-app.sh
       - name: Verify app bundle

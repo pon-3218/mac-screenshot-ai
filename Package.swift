@@ -17,6 +17,10 @@ let package = Package(
                 .linkedFramework("SwiftUI"),
                 .linkedFramework("UserNotifications")
             ]
+        ),
+        .testTarget(
+            name: "CaptureCodexTests",
+            dependencies: ["CaptureCodex"]
         )
     ],
     swiftLanguageModes: [.v5]

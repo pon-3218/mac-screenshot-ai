@@ -50,7 +50,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        item.autosaveName = "CaptureCodex.statusItem"
+        item.isVisible = true
         item.button?.image = menuBarIcon(available: true)
+        item.button?.imageScaling = .scaleProportionallyDown
         item.button?.toolTip = "Capture Codex"
 
         let menu = NSMenu()
@@ -65,6 +68,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.items.forEach { $0.target = self }
         item.menu = menu
         statusItem = item
+
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            self?.statusItem?.isVisible = true
+        }
     }
 
     private func beginHotkeyMonitoring() {
@@ -86,6 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateStatusItem(available: Bool) {
+        statusItem?.isVisible = true
         statusItem?.button?.image = menuBarIcon(available: available)
         statusItem?.button?.toolTip = available ? "Capture Codex" : "Capture Codex：アクセシビリティ権限が必要"
     }

@@ -33,6 +33,8 @@ macOSの選択領域をキャプチャし、その画像についてCodexへ質�
 
 配布版は[最新の公証済みDMG](https://github.com/pon-3218/mac-screenshot-ai/releases/latest/download/Capture-Codex-macOS.dmg)を開き、`Capture Codex.app`をApplicationsへ移動します。
 
+同じReleaseにある`.sha256`ファイルでダウンロードしたDMGのSHA-256を照合できます。
+
 初回起動時に次の権限が必要です。
 
 - 画面収録: 選択領域の画像を取得するため
@@ -76,9 +78,12 @@ Developer ID署名、公証、DMG生成は[docs/DISTRIBUTION.md](docs/DISTRIBUTI
 
 ```bash
 swift build
+swift test
 ```
 
 構成は[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)、コントリビューション手順は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+
+脆弱性は公開Issueではなく、[Security Policy](SECURITY.md)に従って非公開で報告してください。通常の不具合や改善はIssue、変更提案はPull Requestを使用してください。
 
 ## 商標
 

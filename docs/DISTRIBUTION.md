@@ -33,7 +33,7 @@ DMGはアプリとApplicationsフォルダを左右に配置したドラッグ�
 
 ```bash
 python3 -m venv .release-venv
-.release-venv/bin/pip install -r scripts/requirements-release.txt
+.release-venv/bin/pip install --require-hashes -r scripts/requirements-release.txt
 make verify
 DMGBUILD_PYTHON="$PWD/.release-venv/bin/python" \
   ./scripts/create-dmg.sh \
@@ -75,4 +75,4 @@ spctl --assess --type open --context context:primary-signature --verbose=4 \
 - `APPLE_TEAM_ID`: Developer Team ID
 - `APPLE_APP_SPECIFIC_PASSWORD`: Apple IDのアプリ固有パスワード
 
-タグ名と`Info.plist`のバージョンを一致させてください。例: `v0.1.4`。
+タグ名と`Info.plist`のバージョンを一致させてください。例: `v0.1.6`。

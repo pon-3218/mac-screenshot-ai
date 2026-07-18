@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panelController: FloatingPanelController?
     private var settingsWindowController: SettingsWindowController?
     private var historyWindowController: HistoryWindowController?
+    private var onboardingWindowController: OnboardingWindowController?
     private var completionToastController: CompletionToastController?
     private var statusItem: NSStatusItem?
     private var permissionRetryTimer: Timer?
@@ -38,9 +39,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.updateStatusItem(available: available)
         }
 
+        let shouldShowOnboarding = OnboardingState.needsPresentation
+            || ProcessInfo.processInfo.arguments.contains("--open-onboarding")
+        LoginItem.setEnabled(AppSettings.shared.launchAtLogin)
         configureStatusItem()
-        beginHotkeyMonitoring()
-        model.requestNotificationAuthorization()
+        beginHotkeyMonitoring(requestPermission: !shouldShowOnboarding)
+        if shouldShowOnboarding {
+            showOnboarding()
+        } else {
+            model.requestNotificationAuthorization()
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -62,6 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "最後の回答を表示", action: #selector(showLastAnswer), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "履歴…", action: #selector(showHistory), keyEquivalent: ""))
         menu.addItem(.separator())
+        menu.addItem(NSMenuItem(title: "使い方…", action: #selector(showOnboarding), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "設定…", action: #selector(showSettings), keyEquivalent: ","))
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Capture Codexを終了", action: #selector(quit), keyEquivalent: "q"))
@@ -75,8 +84,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func beginHotkeyMonitoring() {
-        if model.startHotkeyMonitoring(requestPermission: true) {
+    private func beginHotkeyMonitoring(requestPermission: Bool = true) {
+        if model.startHotkeyMonitoring(requestPermission: requestPermission) {
             permissionRetryTimer?.invalidate()
             permissionRetryTimer = nil
             return
@@ -137,6 +146,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         historyWindowController?.show()
     }
 
+    @objc private func showOnboarding() {
+        if onboardingWindowController == nil {
+            onboardingWindowController = OnboardingWindowController(
+                settings: .shared,
+                onRequestPermissions: { [weak self] in
+                    guard let self else { return }
+                    self.model.requestPermissions()
+                    self.beginHotkeyMonitoring()
+                    self.model.requestNotificationAuthorization()
+                },
+                onFinish: { [weak self] in
+                    OnboardingState.markCompleted()
+                    self?.onboardingWindowController?.close()
+                    self?.beginHotkeyMonitoring()
+                    self?.model.requestNotificationAuthorization()
+                }
+            )
+        }
+        onboardingWindowController?.show()
+    }
+
     @objc private func showSettings() {
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(
@@ -161,6 +191,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func quit() {
         NSApp.terminate(nil)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if OnboardingState.needsPresentation {
+            showOnboarding()
+        } else {
+            showSettings()
+        }
+        return true
     }
 }
 

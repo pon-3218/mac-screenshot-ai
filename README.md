@@ -4,6 +4,16 @@ macOSの選択領域をキャプチャし、その画像についてCodexへ質�
 
 > 非公式のオープンソースプロジェクトです。OpenAIによる公式製品、提携製品、推奨製品ではありません。
 
+<p align="center">
+  <a href="docs/assets/capture-codex-demo.mp4">
+    <img src="docs/assets/capture-codex-demo.gif" alt="Capture Codexで会議資料をキャプチャし、質問して回答を確認するデモ" width="960" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="docs/assets/capture-codex-demo.mp4">音付きデモを見る</a> · <a href="https://www.edge-grow.com/#/mac-tools">公式ページ</a>
+</p>
+
 ## 主な機能
 
 - 変更可能なグローバルショートカットによる選択領域キャプチャ

@@ -42,3 +42,13 @@ DMGからApplicationsへ移動した後、メニューバーアプリである�
 - `swift test`
 - `swift build`
 - `/Applications/Capture Codex.app`を起動してオンボーディングとログイン項目を確認する
+
+## 検証結果
+
+- `swift test`: 4件成功
+- `swift build`: 成功
+- PR #1の必須チェック`build`: 成功
+- `/Applications/Capture Codex.app` 0.1.7で初回オンボーディングと自動起動ONを確認
+- macOSのバックグラウンド項目で`enabled`、`allowed`を確認
+- v0.1.7の公開DMGでSHA-256、DMG、staple、署名、Gatekeeper検証に成功
+- Release: https://github.com/pon-3218/mac-screenshot-ai/releases/tag/v0.1.7

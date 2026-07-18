@@ -46,8 +46,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         beginHotkeyMonitoring(requestPermission: !shouldShowOnboarding)
         if shouldShowOnboarding {
             showOnboarding()
-        } else {
-            model.requestNotificationAuthorization()
         }
     }
 
@@ -154,13 +152,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard let self else { return }
                     self.model.requestPermissions()
                     self.beginHotkeyMonitoring()
-                    self.model.requestNotificationAuthorization()
                 },
                 onFinish: { [weak self] in
                     OnboardingState.markCompleted()
                     self?.onboardingWindowController?.close()
                     self?.beginHotkeyMonitoring()
-                    self?.model.requestNotificationAuthorization()
                 }
             )
         }
@@ -197,7 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if OnboardingState.needsPresentation {
             showOnboarding()
         } else {
-            showSettings()
+            showLastAnswer()
         }
         return true
     }

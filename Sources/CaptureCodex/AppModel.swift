@@ -38,7 +38,6 @@ final class AppModel: ObservableObject {
     private let hotkeyMonitor = GlobalHotkeyMonitor()
     private let captureService = CaptureService()
     private let codexClient = CodexAppServerClient()
-    private let notificationService = NotificationService()
     private let settings = AppSettings.shared
     private let historyStore = HistoryStore.shared
     private var lastCaptureURL: URL?
@@ -66,13 +65,6 @@ final class AppModel: ObservableObject {
                 self.applyShortcut(shortcut)
             }
         }
-        notificationService.onOpen = { [weak self] in
-            Task { @MainActor in self?.restoreLastAnswerAndShow() }
-        }
-    }
-
-    func requestNotificationAuthorization() {
-        notificationService.requestAuthorization()
     }
 
     func startHotkeyMonitoring(requestPermission: Bool) -> Bool {
@@ -250,7 +242,6 @@ final class AppModel: ObservableObject {
                     answer: answer,
                     avoiding: panelController?.visibleFrame
                 )
-                notificationService.notifyAnswerCompleted(answer: answer)
             } catch {
                 conversation.removeAll {
                     $0.id == userMessage.id || $0.id == assistantMessage.id
@@ -268,7 +259,6 @@ final class AppModel: ObservableObject {
             answer: message,
             avoiding: panelController?.visibleFrame
         )
-        notificationService.notifyTest()
     }
 
     private func saveLastAnswer(question: String, answer: String) {

@@ -72,7 +72,7 @@ private struct CaptureOnboardingView: View {
             }
 
             VStack(alignment: .leading, spacing: 20) {
-                onboardingStep(number: "1", title: "アクセス権を許可", detail: "画面収録、アクセシビリティ、通知を使用します。")
+                onboardingStep(number: "1", title: "アクセス権を許可", detail: "画面収録とアクセシビリティを使用します。")
                 onboardingStep(number: "2", title: "⌘⇧4で範囲を選ぶ", detail: "調べたい場所をドラッグして切り取ります。")
                 onboardingStep(number: "3", title: "質問して回答を受け取る", detail: "上部の入力欄から、その画面について聞けます。")
             }

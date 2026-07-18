@@ -52,3 +52,11 @@ macOS 26ではノッチやメニューバー項目数により、起動中の`NS
 ## 未確認事項
 
 - ユーザー環境でメニューバー項目が見えない直接要因がノッチによるオーバーフローか、macOS 26の可視性状態かは未確認。両方に耐える実装にする。
+
+## 検証結果
+
+- 2026-07-18: `swift test` 2件、`swift build`、CI相当検証に成功
+- 2026-07-18: `/Applications/Capture Codex.app` 0.1.6をDeveloper ID署名で起動
+- 2026-07-18: 公開DMGのSHA-256、公証staple、Gatekeeper、Bundle ID、Team IDを再検証
+- 2026-07-18: [v0.1.6](https://github.com/pon-3218/mac-screenshot-ai/releases/tag/v0.1.6)を公開
+- 2026-07-18: Private vulnerability reporting、Dependabot、secret scanning、push protection、main保護、Immutable Releasesを有効化

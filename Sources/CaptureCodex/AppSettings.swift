@@ -146,6 +146,12 @@ final class AppSettings: ObservableObject {
     @Published var captureSoundEnabled: Bool {
         didSet { defaults.set(captureSoundEnabled, forKey: Key.captureSoundEnabled) }
     }
+    @Published var launchAtLogin: Bool {
+        didSet {
+            defaults.set(launchAtLogin, forKey: Key.launchAtLogin)
+            LoginItem.setEnabled(launchAtLogin)
+        }
+    }
 
     private let defaults: UserDefaults
 
@@ -171,6 +177,11 @@ final class AppSettings: ObservableObject {
         } else {
             captureSoundEnabled = defaults.bool(forKey: Key.captureSoundEnabled)
         }
+        if defaults.object(forKey: Key.launchAtLogin) == nil {
+            launchAtLogin = true
+        } else {
+            launchAtLogin = defaults.bool(forKey: Key.launchAtLogin)
+        }
         normalizeReasoningEffort()
     }
 
@@ -195,5 +206,6 @@ final class AppSettings: ObservableObject {
         static let reasoningEffort = "settings.reasoningEffort"
         static let shortcut = "settings.shortcut"
         static let captureSoundEnabled = "settings.captureSoundEnabled"
+        static let launchAtLogin = "settings.launchAtLogin"
     }
 }

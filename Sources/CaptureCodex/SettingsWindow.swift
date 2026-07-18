@@ -17,7 +17,7 @@ final class SettingsWindowController: NSWindowController {
     ) {
         state = SettingsViewState(onRequestPermissions: onRequestPermissions)
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 470),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 520),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -128,6 +128,7 @@ private struct SettingsView: View {
             }
 
             settingsSection
+            launchSection
             permissionsSection
 
             HStack {
@@ -148,7 +149,7 @@ private struct SettingsView: View {
             }
         }
         .padding(28)
-        .frame(width: 520, height: 470, alignment: .topLeading)
+        .frame(width: 520, height: 520, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
         .onChange(of: settings.modelID) {
             settings.normalizeReasoningEffort()
@@ -212,6 +213,17 @@ private struct SettingsView: View {
                 details: state.notificationDetails,
                 openSettings: state.openNotificationSettings
             )
+        }
+    }
+
+    private var launchSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("起動")
+            settingsRow(label: "ログイン時") {
+                Toggle("自動で起動", isOn: $settings.launchAtLogin)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
         }
     }
 

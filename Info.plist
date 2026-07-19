@@ -19,9 +19,9 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-	<string>0.1.8</string>
+	<string>0.1.9</string>
     <key>CFBundleVersion</key>
-	<string>9</string>
+	<string>10</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSApplicationCategoryType</key>
@@ -36,5 +36,13 @@
 	<string>選択した画面領域をキャプチャし、画像について質問するために使用します。</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 Capture Codex contributors.</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/pon-3218/mac-screenshot-ai/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>+zmXW5GSYKrGZLoFyyTv2TAoSYXVpu5/3G2l7mJoWaI=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
 </dict>
 </plist>

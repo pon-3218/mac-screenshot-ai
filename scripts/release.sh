@@ -68,6 +68,27 @@ case "$mode" in
         stable_archive_path="$release_dir/Capture-Codex-macOS.dmg"
         rm -f "$stable_archive_path"
         ditto "$archive_path" "$stable_archive_path"
+
+        : "${SPARKLE_EDDSA_PRIVATE_KEY:?Set SPARKLE_EDDSA_PRIVATE_KEY to the exported Sparkle private key}"
+        sparkle_generate_appcast=$(find "$project_dir/.build" -type f -path '*/bin/generate_appcast' -print -quit)
+        if [[ -z "$sparkle_generate_appcast" ]]; then
+            print -u2 "Sparkle generate_appcast tool was not found"
+            exit 66
+        fi
+        appcast_dir="$work_dir/appcast"
+        mkdir -p "$appcast_dir"
+        ditto "$archive_path" "$appcast_dir/${archive_path:t}"
+        print -- "- 自動アップデートに対応" > "$appcast_dir/Capture-Codex-$version-macOS.md"
+        print -rn -- "$SPARKLE_EDDSA_PRIVATE_KEY" | \
+            "$sparkle_generate_appcast" \
+                --ed-key-file - \
+                --download-url-prefix "https://github.com/pon-3218/mac-screenshot-ai/releases/download/v$version/" \
+                --link "https://github.com/pon-3218/mac-screenshot-ai/releases/tag/v$version" \
+                --embed-release-notes \
+                --maximum-deltas 0 \
+                -o "$appcast_dir/appcast.xml" \
+                "$appcast_dir"
+        ditto "$appcast_dir/appcast.xml" "$release_dir/appcast.xml"
         ;;
 
     *)
@@ -84,6 +105,10 @@ if [[ -n "$stable_archive_path" ]]; then
     (
         cd "${stable_archive_path:h}"
         shasum -a 256 "${stable_archive_path:t}" > "${stable_archive_path:t}.sha256"
+    )
+    (
+        cd "$release_dir"
+        shasum -a 256 appcast.xml > appcast.xml.sha256
     )
 fi
 print "$archive_path"

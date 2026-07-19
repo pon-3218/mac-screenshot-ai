@@ -86,4 +86,54 @@ final class StatusItemContractTests: XCTestCase {
         XCTAssertFalse(onboarding.contains("通知"))
         XCTAssertTrue(app.contains("else {\n            showLastAnswer()\n        }"))
     }
+
+    func testSparkleUpdaterIsConfiguredAndPackaged() throws {
+        let app = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Sources/CaptureCodex/CaptureCodexApp.swift"),
+            encoding: .utf8
+        )
+        let package = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Package.swift"),
+            encoding: .utf8
+        )
+        let plist = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("Info.plist"),
+            encoding: .utf8
+        )
+        let buildScript = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("scripts/build-app.sh"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(package.contains("sparkle-project/Sparkle"))
+        XCTAssertTrue(package.contains(".product(name: \"Sparkle\""))
+        XCTAssertTrue(app.contains("import Sparkle"))
+        XCTAssertTrue(app.contains("SPUStandardUpdaterController"))
+        XCTAssertTrue(app.contains("supportsGentleScheduledUpdateReminders"))
+        XCTAssertTrue(app.contains("アップデートを確認…"))
+        XCTAssertTrue(plist.contains("SUFeedURL"))
+        XCTAssertTrue(plist.contains("SUPublicEDKey"))
+        XCTAssertTrue(plist.contains("SUEnableAutomaticChecks"))
+        XCTAssertTrue(plist.contains("SUAutomaticallyUpdate"))
+        XCTAssertTrue(buildScript.contains("Contents/Frameworks/Sparkle.framework"))
+        XCTAssertTrue(buildScript.contains("XPCServices/Installer.xpc"))
+        XCTAssertTrue(buildScript.contains("XPCServices/Downloader.xpc"))
+        XCTAssertFalse(buildScript.contains("--deep \\\n+"))
+    }
+
+    func testReleasePublishesSignedSparkleAppcast() throws {
+        let releaseScript = try String(
+            contentsOf: repositoryRoot.appendingPathComponent("scripts/release.sh"),
+            encoding: .utf8
+        )
+        let workflow = try String(
+            contentsOf: repositoryRoot.appendingPathComponent(".github/workflows/release.yml"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(releaseScript.contains("SPARKLE_EDDSA_PRIVATE_KEY"))
+        XCTAssertTrue(releaseScript.contains("generate_appcast"))
+        XCTAssertTrue(releaseScript.contains("appcast.xml"))
+        XCTAssertTrue(workflow.contains("secrets.SPARKLE_EDDSA_PRIVATE_KEY"))
+    }
 }

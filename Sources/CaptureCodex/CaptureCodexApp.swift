@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 
 @main
 enum CaptureCodexMain {
@@ -13,7 +14,7 @@ enum CaptureCodexMain {
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverDelegate {
     private let model = AppModel()
     private var panelController: FloatingPanelController?
     private var settingsWindowController: SettingsWindowController?
@@ -22,8 +23,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var completionToastController: CompletionToastController?
     private var statusItem: NSStatusItem?
     private var permissionRetryTimer: Timer?
+    private var updaterController: SPUStandardUpdaterController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: self
+        )
         if let icon = bundledAppIcon() {
             NSApp.applicationIconImage = icon
         }
@@ -54,6 +61,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.stop()
     }
 
+    nonisolated var supportsGentleScheduledUpdateReminders: Bool { true }
+
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         item.autosaveName = "CaptureCodex.statusItem"
@@ -70,9 +79,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "使い方…", action: #selector(showOnboarding), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "設定…", action: #selector(showSettings), keyEquivalent: ","))
+        let updates = NSMenuItem(
+            title: "アップデートを確認…",
+            action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+            keyEquivalent: ""
+        )
+        updates.target = updaterController
+        updates.isEnabled = updaterController.updater.canCheckForUpdates
+        menu.addItem(updates)
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Capture Codexを終了", action: #selector(quit), keyEquivalent: "q"))
-        menu.items.forEach { $0.target = self }
+        menu.items.filter { $0 !== updates }.forEach { $0.target = self }
         item.menu = menu
         statusItem = item
 

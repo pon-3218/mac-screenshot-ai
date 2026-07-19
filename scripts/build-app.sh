@@ -35,6 +35,14 @@ mkdir -p "$app_dir/Contents/Resources"
 cp "$binary_output" "$app_dir/Contents/MacOS/CaptureCodex"
 cp "$project_dir/Info.plist" "$app_dir/Contents/Info.plist"
 
+sparkle_framework=$(find "$project_dir/.build" -type d -path '*/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework' -print -quit)
+if [[ -z "$sparkle_framework" ]]; then
+    print -u2 "missing Sparkle.framework from Swift Package artifacts"
+    exit 1
+fi
+mkdir -p "$app_dir/Contents/Frameworks"
+ditto "$sparkle_framework" "$app_dir/Contents/Frameworks/Sparkle.framework"
+
 if [[ -f "$icon_source" ]]; then
     mkdir -p "$iconset_dir"
     sips -z 16 16 "$icon_source" --out "$iconset_dir/icon_16x16.png" >/dev/null
@@ -50,17 +58,34 @@ if [[ -f "$icon_source" ]]; then
     iconutil -c icns "$iconset_dir" -o "$app_dir/Contents/Resources/AppIcon.icns"
 fi
 
+sign_sparkle_components() {
+    local identity="$1"
+    local use_timestamp="$2"
+    local framework="$app_dir/Contents/Frameworks/Sparkle.framework"
+    local base="$framework/Versions/B"
+    local args=(--force --options runtime --sign "$identity")
+    if [[ "$use_timestamp" == "1" ]]; then
+        args+=(--timestamp)
+    fi
+
+    codesign "${args[@]}" "$base/XPCServices/Installer.xpc"
+    codesign "${args[@]}" --preserve-metadata=entitlements "$base/XPCServices/Downloader.xpc"
+    codesign "${args[@]}" "$base/Autoupdate"
+    codesign "${args[@]}" "$base/Updater.app"
+    codesign "${args[@]}" "$framework"
+}
+
 if [[ "$signing_identity" == "-" ]]; then
+    sign_sparkle_components "-" 0
     codesign \
         --force \
-        --deep \
         --sign - \
         --requirements "=designated => identifier \"$bundle_id\"" \
         "$app_dir"
 else
+    sign_sparkle_components "$signing_identity" 1
     codesign \
         --force \
-        --deep \
         --options runtime \
         --timestamp \
         --sign "$signing_identity" \

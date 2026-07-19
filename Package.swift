@@ -7,15 +7,25 @@ let package = Package(
     products: [
         .executable(name: "CaptureCodex", targets: ["CaptureCodex"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.2")
+    ],
     targets: [
         .executableTarget(
             name: "CaptureCodex",
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             linkerSettings: [
                 .linkedFramework("AppKit"),
                 .linkedFramework("ApplicationServices"),
                 .linkedFramework("CoreGraphics"),
                 .linkedFramework("ServiceManagement"),
-                .linkedFramework("SwiftUI")
+                .linkedFramework("SwiftUI"),
+                .unsafeFlags([
+                    "-Xlinker", "-rpath",
+                    "-Xlinker", "@executable_path/../Frameworks"
+                ])
             ]
         ),
         .testTarget(

@@ -13,9 +13,22 @@ final class FloatingPanelController: NSObject {
     private let expandedSize = NSSize(width: 620, height: 440)
     private var globalMouseMonitor: Any?
     private var localMouseMonitor: Any?
+    private var resignActiveObserver: NSObjectProtocol?
+    private var lifecycle = OutsideClickMonitorLifecycle()
 
     var visibleFrame: NSRect? {
         panel.isVisible ? panel.frame : nil
+    }
+
+    /// Test/inspection: true while global, local, or resign-active monitoring is armed.
+    var isOutsideClickMonitoringActive: Bool { lifecycle.isActive }
+
+    /// Test/inspection: increments on each successful install (show / re-show).
+    var outsideClickInstallGeneration: Int { lifecycle.installGeneration }
+
+    /// Test/inspection: event mask used for mouse monitors.
+    var outsideClickEventMaskForTesting: NSEvent.EventTypeMask {
+        OutsideClickPolicy.mouseDownEventTypes
     }
 
     init(model: AppModel) {
@@ -44,6 +57,12 @@ final class FloatingPanelController: NSObject {
         panel.orderFrontRegardless()
         panel.makeKeyAndOrderFront(nil)
         installOutsideClickMonitors()
+        // Re-arm on the next turn after capture/activation settles. install()
+        // always removes first, so this never stacks duplicate monitors.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.panel.isVisible else { return }
+            self.installOutsideClickMonitors()
+        }
     }
 
     func hide() {
@@ -63,33 +82,125 @@ final class FloatingPanelController: NSObject {
         panel.setFrame(frame, display: true, animate: animated && panel.isVisible)
     }
 
+    /// Synchronous evaluation used by monitors and unit tests.
+    /// Returns true when the panel was dismissed.
+    @discardableResult
+    func evaluateOutsideClickForTesting(
+        at pointerLocation: CGPoint,
+        eventWindowIsPanel: Bool?
+    ) -> Bool {
+        handlePotentialOutsideClick(
+            pointerLocation: pointerLocation,
+            eventWindowIsPanel: eventWindowIsPanel
+        )
+    }
+
     private func installOutsideClickMonitors() {
         removeOutsideClickMonitors()
-        let events: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        let events = OutsideClickPolicy.mouseDownEventTypes
+
         globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: events) { [weak self] _ in
-            Task { @MainActor in self?.hideIfPointerIsOutside() }
+            // Capture location immediately so a later MainActor hop cannot
+            // evaluate a moved pointer after the outside click.
+            let location = NSEvent.mouseLocation
+            Task { @MainActor in
+                self?.handlePotentialOutsideClick(
+                    pointerLocation: location,
+                    eventWindowIsPanel: nil
+                )
+            }
         }
+
         localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: events) { [weak self] event in
-            self?.hideIfPointerIsOutside()
+            guard let self else { return event }
+            let location = NSEvent.mouseLocation
+            let eventWindowIsPanel: Bool? = {
+                guard let window = event.window else { return nil }
+                return window === self.panel
+            }()
+            Task { @MainActor in
+                self.handlePotentialOutsideClick(
+                    pointerLocation: location,
+                    eventWindowIsPanel: eventWindowIsPanel
+                )
+            }
             return event
         }
+
+        resignActiveObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Desktop / other-app clicks resign active. This path still works when
+            // global mouse monitors miss events after interactive capture.
+            Task { @MainActor in
+                self?.dismissIfVisibleFromOutsideInteraction()
+            }
+        }
+
+        lifecycle.install(
+            global: globalMouseMonitor != nil,
+            local: localMouseMonitor != nil,
+            resignActive: resignActiveObserver != nil
+        )
     }
 
     private func removeOutsideClickMonitors() {
-        if let globalMouseMonitor { NSEvent.removeMonitor(globalMouseMonitor) }
-        if let localMouseMonitor { NSEvent.removeMonitor(localMouseMonitor) }
+        if let globalMouseMonitor {
+            NSEvent.removeMonitor(globalMouseMonitor)
+        }
+        if let localMouseMonitor {
+            NSEvent.removeMonitor(localMouseMonitor)
+        }
+        if let resignActiveObserver {
+            NotificationCenter.default.removeObserver(resignActiveObserver)
+        }
         globalMouseMonitor = nil
         localMouseMonitor = nil
+        resignActiveObserver = nil
+        lifecycle.remove()
     }
 
-    private func hideIfPointerIsOutside() {
+    @discardableResult
+    private func handlePotentialOutsideClick(
+        pointerLocation: CGPoint,
+        eventWindowIsPanel: Bool?
+    ) -> Bool {
+        guard panel.isVisible else {
+            removeOutsideClickMonitors()
+            return false
+        }
+
+        let shouldDismiss: Bool
+        if eventWindowIsPanel != nil {
+            shouldDismiss = OutsideClickPolicy.shouldDismissLocalEvent(
+                isPanelVisible: true,
+                panelFrame: panel.frame,
+                pointerLocation: pointerLocation,
+                eventWindowIsPanel: eventWindowIsPanel
+            )
+        } else {
+            shouldDismiss = OutsideClickPolicy.shouldDismiss(
+                isPanelVisible: true,
+                panelFrame: panel.frame,
+                pointerLocation: pointerLocation
+            )
+        }
+
+        if shouldDismiss {
+            hide()
+            return true
+        }
+        return false
+    }
+
+    private func dismissIfVisibleFromOutsideInteraction() {
         guard panel.isVisible else {
             removeOutsideClickMonitors()
             return
         }
-        if !panel.frame.contains(NSEvent.mouseLocation) {
-            hide()
-        }
+        hide()
     }
 }
 

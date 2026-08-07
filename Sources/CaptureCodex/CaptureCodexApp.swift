@@ -46,13 +46,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, SPUStandardUserDriverD
             self?.updateStatusItem(available: available)
         }
 
-        let shouldShowOnboarding = OnboardingState.needsPresentation
-            || ProcessInfo.processInfo.arguments.contains("--open-onboarding")
+        let isOutsideClickProbe = ProcessInfo.processInfo.arguments.contains("--probe-outside-click")
+        let shouldShowOnboarding = !isOutsideClickProbe
+            && (OnboardingState.needsPresentation
+                || ProcessInfo.processInfo.arguments.contains("--open-onboarding"))
         LoginItem.setEnabled(AppSettings.shared.launchAtLogin)
         configureStatusItem()
-        beginHotkeyMonitoring(requestPermission: !shouldShowOnboarding)
+        beginHotkeyMonitoring(requestPermission: !shouldShowOnboarding && !isOutsideClickProbe)
         if shouldShowOnboarding {
             showOnboarding()
+        }
+        // CAPTURE-004 GUI probe: same FloatingPanelController.show(expanded: false)
+        // path used immediately after a successful interactive capture.
+        if isOutsideClickProbe {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+                self?.model.statusText = "クリップボードにコピーしました"
+                self?.panelController?.show(expanded: false)
+            }
         }
     }
 
